@@ -5,4 +5,4 @@ namespace: bibliophage
 
 resources:
   - namespace.yaml
-  - cnpg-bibliophage-vector.yaml
+  - cnpg-bibliophage-vectors.yaml

@@ -6,15 +6,15 @@ metadata:
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: cnpg-bibliophage-vector
+  name: bibliophage-vectors
   namespace: bibliophage
 spec:
   bootstrap:
     initdb:
-      database: bibliophage
+      database: vectors
       owner: bibliophage
       secret:
-        name: cnpg-bibliophage-app-user
+        name: bibliophage-app-user
   instances: 3
   managed:
     services:
@@ -30,18 +30,18 @@ spec:
   storage:
     size: 10Gi
   superuserSecret:
-    name: cnpg-bibliophage-superuser
+    name: bibliophage-superuser
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
-  name: cnpg-bibliophage-vector
+  name: bibliophage-vectors
   namespace: bibliophage
 spec:
   cluster:
-    name: cnpg-bibliophage-vector
+    name: bibliophage-vectors
   extensions:
   - ensure: present
     name: pgvector
-  name: vector
+  name: vectors
   owner: bibliophage
