@@ -3,6 +3,11 @@ kind: Cluster
 metadata:
   name: bibliophage-vectors
 spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql-standard-trixie
+    major: 17
   instances: 3
   superuserSecret:
     name: bibliophage-superuser
@@ -20,7 +25,7 @@ spec:
         - selectorType: rw
           serviceTemplate:
             metadata:
-              name: "bibliophage-vector-db-rw-lb"
+              name: "bibliophage-vectors-db-rw"
               annotations:
                 kube-vip.io/loadbalancerIPs: 192.168.249.6
             spec:

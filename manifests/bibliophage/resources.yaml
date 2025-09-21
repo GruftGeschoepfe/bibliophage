@@ -15,6 +15,11 @@ spec:
       owner: bibliophage
       secret:
         name: bibliophage-app-user
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    major: 17
+    name: postgresql-standard-trixie
   instances: 3
   managed:
     services:
@@ -24,7 +29,7 @@ spec:
           metadata:
             annotations:
               kube-vip.io/loadbalancerIPs: 192.168.249.6
-            name: bibliophage-vector-db-rw-lb
+            name: bibliophage-vectors-db-rw
           spec:
             type: LoadBalancer
   storage:
