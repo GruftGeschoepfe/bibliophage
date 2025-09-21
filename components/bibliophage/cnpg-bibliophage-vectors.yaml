@@ -41,5 +41,5 @@ spec:
   cluster:
     name: bibliophage-vectors
   extensions:
-  - name: pgvector
+  - name: vector
     ensure: present

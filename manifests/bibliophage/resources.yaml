@@ -47,6 +47,6 @@ spec:
     name: bibliophage-vectors
   extensions:
   - ensure: present
-    name: pgvector
+    name: vector
   name: vectors
   owner: bibliophage
