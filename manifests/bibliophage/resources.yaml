@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bibliophage
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-bibliophage-vector
+  namespace: bibliophage
+spec:
+  bootstrap:
+    initdb:
+      database: bibliophage
+      owner: bibliophage
+      secret:
+        name: cnpg-bibliophage-app-user
+  instances: 3
+  managed:
+    services:
+      additional:
+      - selectorType: rw
+        serviceTemplate:
+          metadata:
+            annotations:
+              kube-vip.io/loadbalancerIPs: 192.168.249.6
+            name: bibliophage-vector-db-rw-lb
+          spec:
+            type: LoadBalancer
+  storage:
+    size: 10Gi
+  superuserSecret:
+    name: cnpg-bibliophage-superuser
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: cnpg-bibliophage-vector
+  namespace: bibliophage
+spec:
+  cluster:
+    name: cnpg-bibliophage-vector
+  extensions:
+  - ensure: present
+    name: pgvector
+  name: vector
+  owner: bibliophage
