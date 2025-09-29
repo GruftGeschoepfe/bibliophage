@@ -27,7 +27,7 @@ spec:
             metadata:
               name: "bibliophage-vectors-db-rw"
               annotations:
-                kube-vip.io/loadbalancerIPs: 192.168.249.6
+                kube-vip.io/loadbalancerIPs: 192.168.14.6
             spec:
               type: LoadBalancer
 ---

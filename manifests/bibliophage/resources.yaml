@@ -28,7 +28,7 @@ spec:
         serviceTemplate:
           metadata:
             annotations:
-              kube-vip.io/loadbalancerIPs: 192.168.249.6
+              kube-vip.io/loadbalancerIPs: 192.168.14.6
             name: bibliophage-vectors-db-rw
           spec:
             type: LoadBalancer
