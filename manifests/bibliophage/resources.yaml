@@ -3,6 +3,52 @@ kind: Namespace
 metadata:
   name: bibliophage
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: db-standard-user
+  namespace: bibliophage
+spec:
+  data:
+  - remoteRef:
+      key: kv/nekropolis/bibliophage/db-standard-user
+      property: username
+    secretKey: username
+  - remoteRef:
+      key: kv/nekropolis/bibliophage/db-standard-user
+      property: password
+    secretKey: password
+  refreshInterval: 1h0m0s
+  refreshPolicy: Periodic
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: openbao-backend
+  target:
+    name: db-standard-user
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: db-superuser
+  namespace: bibliophage
+spec:
+  data:
+  - remoteRef:
+      key: kv/nekropolis/bibliophage/db-standard-user
+      property: username
+    secretKey: username
+  - remoteRef:
+      key: kv/nekropolis/bibliophage/db-standard-user
+      property: password
+    secretKey: password
+  refreshInterval: 1h0m0s
+  refreshPolicy: Periodic
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: openbao-backend
+  target:
+    name: db-superuser
+---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -14,7 +60,7 @@ spec:
       database: vectors
       owner: bibliophage
       secret:
-        name: bibliophage-app-user
+        name: db-standard-user
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
@@ -35,7 +81,7 @@ spec:
   storage:
     size: 10Gi
   superuserSecret:
-    name: bibliophage-superuser
+    name: db-superuser
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database

@@ -10,13 +10,13 @@ spec:
     major: 17
   instances: 3
   superuserSecret:
-    name: bibliophage-superuser
+    name: db-superuser
   bootstrap:
     initdb:
       database: vectors
       owner: bibliophage
       secret:
-        name: bibliophage-app-user
+        name: db-standard-user
   storage:
     size: 10Gi
   managed:
