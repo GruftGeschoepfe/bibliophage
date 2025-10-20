@@ -34,11 +34,11 @@ metadata:
 spec:
   data:
   - remoteRef:
-      key: kv/nekropolis/bibliophage/db-standard-user
+      key: kv/nekropolis/bibliophage/db-superuser
       property: username
     secretKey: username
   - remoteRef:
-      key: kv/nekropolis/bibliophage/db-standard-user
+      key: kv/nekropolis/bibliophage/db-superuser
       property: password
     secretKey: password
   refreshInterval: 1h0m0s
@@ -47,6 +47,62 @@ spec:
     kind: ClusterSecretStore
     name: openbao-backend
   target:
+    name: db-superuser
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: bibliophage-documents
+  namespace: bibliophage
+spec:
+  bootstrap:
+    initdb:
+      database: documents
+      owner: bibliophage
+      postInitApplicationSQL:
+      - CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;
+      - GRANT USAGE ON SCHEMA documentdb_core TO bibliophage;
+      - GRANT USAGE ON SCHEMA documentdb_api TO bibliophage;
+      - GRANT USAGE ON SCHEMA documentdb_api_internal TO bibliophage;
+      - GRANT USAGE ON SCHEMA documentdb_api_catalog TO bibliophage;
+      - GRANT USAGE ON SCHEMA documentdb_data TO bibliophage;
+      - GRANT ALL ON ALL TABLES IN SCHEMA documentdb_core TO bibliophage;
+      - GRANT ALL ON ALL TABLES IN SCHEMA documentdb_api TO bibliophage;
+      - GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_core TO bibliophage;
+      - GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_api TO bibliophage;
+      - GRANT ALL ON ALL TABLES IN SCHEMA documentdb_data TO bibliophage;
+      - GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_data TO bibliophage;
+      secret:
+        name: db-standard-user
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    major: 17
+    name: documentdb-bookworm
+  instances: 3
+  managed:
+    services:
+      additional:
+      - selectorType: rw
+        serviceTemplate:
+          metadata:
+            annotations:
+              kube-vip.io/loadbalancerIPs: 192.168.14.7
+            name: bibliophage-documents-db-rw
+          spec:
+            type: LoadBalancer
+  postgresGID: 999
+  postgresUID: 999
+  postgresql:
+    parameters:
+      cron.database_name: documents
+    shared_preload_libraries:
+    - pg_cron
+    - pg_documentdb_core
+    - pg_documentdb
+  storage:
+    size: 10Gi
+  superuserSecret:
     name: db-superuser
 ---
 apiVersion: postgresql.cnpg.io/v1
@@ -82,6 +138,20 @@ spec:
     size: 10Gi
   superuserSecret:
     name: db-superuser
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: bibliophage-documents
+  namespace: bibliophage
+spec:
+  cluster:
+    name: bibliophage-documents
+  extensions:
+  - ensure: present
+    name: documentdb
+  name: documents
+  owner: bibliophage
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database

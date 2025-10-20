@@ -1,0 +1,82 @@
+# pretty much based on this https://blog.ferretdb.io/run-ferretdb-postgres-documentdb-extension-cnpg-kubernetes/
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: bibliophage-documents
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: documentdb-bookworm
+    major: 17
+  instances: 3
+  # UID and GID are required like this by the documentDB image
+  postgresUID: 999
+  postgresGID: 999
+  superuserSecret:
+    name: db-superuser
+  bootstrap:
+    initdb:
+      database: documents
+      owner: bibliophage
+      secret:
+        name: db-standard-user
+      # this creates the extension *before* the  application database is made available
+      # to any clients, so there is no weirdness with a client
+      # talking to a fresh DB without it
+      # note that this is different from postInitSQL, which is executed against the `postgres` db
+      # k explain clusters.postgresql.cnpg.io.spec.bootstrap.initDb
+      # once we know what is what, we should take another look at the Grants and whether they are
+      # adequate, for now, we have granted them so DBeaver won't complain when trying to read the DB
+      postInitApplicationSQL:
+        - 'CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;'
+        - 'GRANT USAGE ON SCHEMA documentdb_core TO bibliophage;'
+        - 'GRANT USAGE ON SCHEMA documentdb_api TO bibliophage;'
+        - 'GRANT USAGE ON SCHEMA documentdb_api_internal TO bibliophage;'
+        - 'GRANT USAGE ON SCHEMA documentdb_api_catalog TO bibliophage;'
+        - 'GRANT USAGE ON SCHEMA documentdb_data TO bibliophage;'
+        - 'GRANT ALL ON ALL TABLES IN SCHEMA documentdb_core TO bibliophage;'
+        - 'GRANT ALL ON ALL TABLES IN SCHEMA documentdb_api TO bibliophage;'
+        - 'GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_core TO bibliophage;'
+        - 'GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_api TO bibliophage;'
+        - 'GRANT ALL ON ALL TABLES IN SCHEMA documentdb_data TO bibliophage;'
+        - 'GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_data TO bibliophage;'
+  # this section was suggested by the instructions we followed
+  postgresql:
+    # this is the declarative part ensuring the extensions are enabled
+    # but since this is managed after the DB is made available
+    # we have the postInitSQL step too
+    shared_preload_libraries:
+      - pg_cron
+      - pg_documentdb_core
+      - pg_documentdb
+    parameters:
+      # documentsdb or something else has adependency on pg_cron
+      # we want pg_cron to operate on the right db
+      cron.database_name: 'documents'
+  storage:
+    size: 10Gi
+  managed:
+    services:
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: "bibliophage-documents-db-rw"
+              annotations:
+                kube-vip.io/loadbalancerIPs: 192.168.14.7
+            spec:
+              type: LoadBalancer
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: bibliophage-documents
+spec:
+  name: documents
+  owner: bibliophage
+  cluster:
+    name: bibliophage-documents
+  extensions:
+  - name: documentdb
+    ensure: present

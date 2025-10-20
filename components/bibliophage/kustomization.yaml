@@ -6,4 +6,5 @@ namespace: bibliophage
 resources:
   - namespace.yaml
   - cnpg-bibliophage-vectors.yaml
+  - cnpg-bibliophage-documents.yaml
   - externalsecrets.yaml
