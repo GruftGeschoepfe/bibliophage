@@ -9,3 +9,4 @@ resources:
   - cnpg-bibliophage-documents.yaml
   - externalsecrets.yaml
   - deployment-ferretdb.yaml
+  - loadbalancer-ferretdb.yaml

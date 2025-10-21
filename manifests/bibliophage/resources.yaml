@@ -3,6 +3,25 @@ kind: Namespace
 metadata:
   name: bibliophage
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kube-vip.io/loadbalancerIPs: 192.168.14.8
+  labels: null
+  name: ferretdb
+  namespace: bibliophage
+spec:
+  ports:
+  - name: main
+    port: 27017
+    protocol: TCP
+    targetPort: 27017
+  publishNotReadyAddresses: false
+  selector:
+    app.kubernetes.io/app: ferretdb
+  type: LoadBalancer
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
