@@ -3,6 +3,35 @@ kind: Namespace
 metadata:
   name: bibliophage
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ferretdb
+  namespace: bibliophage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ferretdb
+  template:
+    metadata:
+      labels:
+        app: ferretdb
+    spec:
+      containers:
+      - env:
+        - name: FERRETDB_POSTGRESQL_URL
+          valueFrom:
+            secretKeyRef:
+              key: connectionstring
+              name: ferretdb
+        - name: FERRETDB_TELEMETRY
+          value: disable
+        image: ghcr.io/ferretdb/ferretdb:2.1.0
+        name: ferretdb
+        ports:
+        - containerPort: 27017
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -48,6 +77,25 @@ spec:
     name: openbao-backend
   target:
     name: db-superuser
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ferretdb
+  namespace: bibliophage
+spec:
+  data:
+  - remoteRef:
+      key: kv/nekropolis/bibliophage/ferretdb
+      property: connectionstring
+    secretKey: connectionstring
+  refreshInterval: 1h0m0s
+  refreshPolicy: Periodic
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: openbao-backend
+  target:
+    name: ferretdb
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster

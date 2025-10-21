@@ -8,3 +8,4 @@ resources:
   - cnpg-bibliophage-vectors.yaml
   - cnpg-bibliophage-documents.yaml
   - externalsecrets.yaml
+  - deployment-ferretdb.yaml
