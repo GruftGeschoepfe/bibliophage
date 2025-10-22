@@ -13,5 +13,5 @@ spec:
     targetPort: 27017
   publishNotReadyAddresses: false
   selector:
-    app.kubernetes.io/app: ferretdb
+    app.kubernetes.io/name: ferretdb
   type: LoadBalancer

@@ -2,15 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ferretdb
+  labels:
+    app.kubernetes.io/name: ferretdb
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: bibliophage
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ferretdb
+      app.kubernetes.io/name: ferretdb
   template:
     metadata:
       labels:
-        app: ferretdb
+        app.kubernetes.io/name: ferretdb
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: bibliophage
     spec:
       containers:
         - name: ferretdb
