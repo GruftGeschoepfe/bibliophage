@@ -9,7 +9,7 @@ spec:
     kind: ClusterImageCatalog
     name: documentdb-bookworm
     major: 17
-  instances: 3
+  instances: 1
   # UID and GID are required like this by the documentDB image
   postgresUID: 999
   postgresGID: 999
@@ -28,6 +28,7 @@ spec:
       # k explain clusters.postgresql.cnpg.io.spec.bootstrap.initDb
       # once we know what is what, we should take another look at the Grants and whether they are
       # adequate, for now, we have granted them so DBeaver won't complain when trying to read the DB
+      #postInitSQL:
       postInitApplicationSQL:
         - 'CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;'
         - 'GRANT USAGE ON SCHEMA documentdb_core TO bibliophage;'
@@ -51,9 +52,19 @@ spec:
       - pg_documentdb_core
       - pg_documentdb
     parameters:
-      # documentsdb or something else has adependency on pg_cron
-      # we want pg_cron to operate on the right db
-      cron.database_name: 'documents'
+      # documentsdb has a dependency on pg_cron
+      # i have only found fragmentary documentation on this, but
+      # pg_cron can seemingly only be run against a single database
+      # https://github.com/citusdata/pg_cron?tab=readme-ov-file#setting-up-pg_cron
+      # and documentdb seems to have a requirement for that being the postgres system db
+      # see the tidbit about the cron.database_name parameter here
+      # https://blog.ferretdb.io/run-ferretdb-postgres-documentdb-extension-cnpg-kubernetes/#create-the-postgresql-cluster
+      cron.database_name: 'postgres'
+      # pg_cron needs to be able to authenticate to the database to start cronjobs
+      # so to allow the database to talk to itself, we tell it to use the default postgresql unix domain socket
+      # leaving the string empty does that for us
+      # https://github.com/citusdata/pg_cron?tab=readme-ov-file#ensuring-pg_cron-can-start-jobs
+      cron.host: ''
   storage:
     size: 10Gi
   managed:
