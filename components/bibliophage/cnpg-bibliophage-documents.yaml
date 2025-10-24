@@ -26,23 +26,18 @@ spec:
       # talking to a fresh DB without it
       # note that this is different from postInitSQL, which is executed against the `postgres` db
       # k explain clusters.postgresql.cnpg.io.spec.bootstrap.initDb
-      # once we know what is what, we should take another look at the Grants and whether they are
-      # adequate, for now, we have granted them so DBeaver won't complain when trying to read the DB
       #postInitSQL:
       postInitApplicationSQL:
+        # CASCADE will enable all dependencies as well, which includes  pg_cron and pg_documentdb_core
         - 'CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;'
-        - 'GRANT USAGE ON SCHEMA documentdb_core TO bibliophage;'
-        - 'GRANT USAGE ON SCHEMA documentdb_api TO bibliophage;'
-        - 'GRANT USAGE ON SCHEMA documentdb_api_internal TO bibliophage;'
-        - 'GRANT USAGE ON SCHEMA documentdb_api_catalog TO bibliophage;'
-        - 'GRANT USAGE ON SCHEMA documentdb_data TO bibliophage;'
-        - 'GRANT ALL ON ALL TABLES IN SCHEMA documentdb_core TO bibliophage;'
-        - 'GRANT ALL ON ALL TABLES IN SCHEMA documentdb_api TO bibliophage;'
-        - 'GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_core TO bibliophage;'
-        - 'GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_api TO bibliophage;'
-        - 'GRANT ALL ON ALL TABLES IN SCHEMA documentdb_data TO bibliophage;'
-        - 'GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_data TO bibliophage;'
-  # this section was suggested by the instructions we followed
+        # mongosh/ferretdb will attempt to set this parameter and fail if it cannot
+        # see https://github.com/FerretDB/FerretDB/issues/4997#issuecomment-2780636246
+        # the documentdb_admin_role is apparently also needed
+        # a nice side effect of this is, that it allows accessing the 
+        # postgres DB as the application user usign e.g. DBeaver without
+        # getting errors about missing permissions on the documentdb schemas
+        - 'GRANT SET ON PARAMETER documentdb.maxuserlimit TO bibliophage;'
+        - 'GRANT documentdb_admin_role TO bibliophage;'
   postgresql:
     # this is the declarative part ensuring the extensions are enabled
     # but since this is managed after the DB is made available
@@ -56,10 +51,10 @@ spec:
       # i have only found fragmentary documentation on this, but
       # pg_cron can seemingly only be run against a single database
       # https://github.com/citusdata/pg_cron?tab=readme-ov-file#setting-up-pg_cron
-      # and documentdb seems to have a requirement for that being the postgres system db
+      # and documentdb seems to have a requirement for that being the database that the documentdb extension is running in
       # see the tidbit about the cron.database_name parameter here
       # https://blog.ferretdb.io/run-ferretdb-postgres-documentdb-extension-cnpg-kubernetes/#create-the-postgresql-cluster
-      cron.database_name: 'postgres'
+      cron.database_name: 'documents'
       # pg_cron needs to be able to authenticate to the database to start cronjobs
       # so to allow the database to talk to itself, we tell it to use the default postgresql unix domain socket
       # leaving the string empty does that for us
@@ -88,6 +83,3 @@ spec:
   owner: bibliophage
   cluster:
     name: bibliophage-documents
-  extensions:
-  - name: documentdb
-    ensure: present

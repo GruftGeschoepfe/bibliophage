@@ -111,9 +111,13 @@ metadata:
 spec:
   data:
   - remoteRef:
-      key: kv/nekropolis/bibliophage/ferretdb
-      property: connectionstring
-    secretKey: connectionstring
+      key: kv/nekropolis/bibliophage/db-standard-user
+      property: username
+    secretKey: username
+  - remoteRef:
+      key: kv/nekropolis/bibliophage/db-standard-user
+      property: password
+    secretKey: password
   refreshInterval: 1h0m0s
   refreshPolicy: Periodic
   secretStoreRef:
@@ -121,6 +125,9 @@ spec:
     name: openbao-backend
   target:
     name: ferretdb
+    template:
+      data:
+        connectionstring: postgres://{{ .username }}:{{ .password }}@bibliophage-documents-rw:5432/documents
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
@@ -134,17 +141,8 @@ spec:
       owner: bibliophage
       postInitApplicationSQL:
       - CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;
-      - GRANT USAGE ON SCHEMA documentdb_core TO bibliophage;
-      - GRANT USAGE ON SCHEMA documentdb_api TO bibliophage;
-      - GRANT USAGE ON SCHEMA documentdb_api_internal TO bibliophage;
-      - GRANT USAGE ON SCHEMA documentdb_api_catalog TO bibliophage;
-      - GRANT USAGE ON SCHEMA documentdb_data TO bibliophage;
-      - GRANT ALL ON ALL TABLES IN SCHEMA documentdb_core TO bibliophage;
-      - GRANT ALL ON ALL TABLES IN SCHEMA documentdb_api TO bibliophage;
-      - GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_core TO bibliophage;
-      - GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_api TO bibliophage;
-      - GRANT ALL ON ALL TABLES IN SCHEMA documentdb_data TO bibliophage;
-      - GRANT ALL ON ALL SEQUENCES IN SCHEMA documentdb_data TO bibliophage;
+      - GRANT SET ON PARAMETER documentdb.maxuserlimit TO bibliophage;
+      - GRANT documentdb_admin_role TO bibliophage;
       secret:
         name: db-standard-user
   imageCatalogRef:
@@ -152,7 +150,7 @@ spec:
     kind: ClusterImageCatalog
     major: 17
     name: documentdb-bookworm
-  instances: 3
+  instances: 1
   managed:
     services:
       additional:
@@ -169,6 +167,7 @@ spec:
   postgresql:
     parameters:
       cron.database_name: documents
+      cron.host: ""
     shared_preload_libraries:
     - pg_cron
     - pg_documentdb_core
@@ -220,9 +219,6 @@ metadata:
 spec:
   cluster:
     name: bibliophage-documents
-  extensions:
-  - ensure: present
-    name: documentdb
   name: documents
   owner: bibliophage
 ---
