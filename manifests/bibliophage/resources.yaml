@@ -168,6 +168,9 @@ spec:
     parameters:
       cron.database_name: documents
       cron.host: ""
+      documentdb.localhost_connection_string: host=localhost user=bibliophage
+    pg_hba:
+    - host documents bibliophage localhost trust
     shared_preload_libraries:
     - pg_cron
     - pg_documentdb_core

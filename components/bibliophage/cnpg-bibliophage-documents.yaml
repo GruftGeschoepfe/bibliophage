@@ -46,6 +46,11 @@ spec:
       - pg_cron
       - pg_documentdb_core
       - pg_documentdb
+    pg_hba:
+      # this entry allows any user on localhost to login as bibliophage on the documents db
+      # not great, but it's the least annoying solution for the time being
+      # see the tidbit below about the documentdb connection string as to why we do this
+      - 'host documents bibliophage localhost trust'
     parameters:
       # documentsdb has a dependency on pg_cron
       # i have only found fragmentary documentation on this, but
@@ -60,6 +65,19 @@ spec:
       # leaving the string empty does that for us
       # https://github.com/citusdata/pg_cron?tab=readme-ov-file#ensuring-pg_cron-can-start-jobs
       cron.host: ''
+      # documentdb needs to connect back to itself using libpq
+      # it would be nice to use a socket here, but cnpg defines fixed entries  for socket connections in pg-hba.conf
+      # that are evaluated before any additional user created ones
+      # the way they are written means, that only 'postgres' can connect using a local socket connection and peer auth
+      # that is not what we want, because ferretdb will connect using an application user
+      # so for now, we will be using the regular IP network stack, even though this is all happening
+      # locally
+      # we can either pass a directory containing the postgresql socket files as a hostname
+      # or a regular hostname / IP
+      # we can find out where the socket is using the query
+      # SELECT name, setting, short_desc, context FROM pg_settings  WHERE name LIKE '%socket%';
+      #documentdb.localhost_connection_string: 'host=/controller/run user=bibliophage'
+      documentdb.localhost_connection_string: 'host=localhost user=bibliophage'
   storage:
     size: 10Gi
   managed:
